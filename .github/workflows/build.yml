@@ -1,0 +1,19 @@
+name: PluginManager build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  host:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Host build and tests
+        run: |
+          cmake -S . -B build/host -DPM_BUILD_TESTS=ON
+          cmake --build build/host
+          ctest --test-dir build/host --output-on-failure
+      - name: SDK builder tests
+        run: python -m unittest discover -s sdk-builder/tests -v

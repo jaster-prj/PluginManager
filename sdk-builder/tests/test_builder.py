@@ -4,11 +4,12 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).parents[1]))
 
 from plugin_sdk_builder import (DescriptorError, build_package, generate_sdk,
-                                load_descriptor, package_elf, validate_descriptor)
+                                 load_descriptor, package_elf, validate_descriptor)
 
 
 VALID = {
@@ -44,6 +45,14 @@ VALID = {
     "limits": {"name_max": 63, "version_max": 31, "max_image_size": 8192,
                 "max_ram_size": 8192, "max_stack_size": 2048},
 }
+
+
+def arm_rel_elf() -> bytes:
+    image = bytearray(52)
+    image[:7] = b"\x7fELF\x01\x01\x01"
+    struct.pack_into("<HHI", image, 16, 1, 40, 1)
+    struct.pack_into("<H", image, 40, 52)
+    return bytes(image)
 
 
 class BuilderTests(unittest.TestCase):
@@ -122,6 +131,12 @@ class BuilderTests(unittest.TestCase):
             cmake = (output / "CMakeLists.txt").read_text()
             self.assertIn("PM_PLUGIN_ID", cmake)
             self.assertIn("--emit-relocs", cmake)
+            self.assertIn("-mcpu=cortex-m0plus", cmake)
+            self.assertNotIn("cortex-m4", cmake)
+            self.assertLess(cmake.index("set(CMAKE_C_COMPILER"),
+                            cmake.index("project(generated_plugin C)"))
+            self.assertIn("${PM_PLUGIN_SOURCES}", cmake)
+            self.assertFalse((output / "plugin.c").exists())
             self.assertTrue((output / "cmake/plugin_memory.ld.in").exists())
 
     def test_generated_descriptor_source_contains_wire_abi(self):
@@ -172,6 +187,8 @@ class BuilderTests(unittest.TestCase):
             self.assertIn("PM_SDK_SERVICE_TRANSPORT_ID", ids)
             self.assertIn("pm_sdk_transport_get", runtime)
             self.assertIn("pm_sdk_transport_get", source)
+            self.assertIn("service->version != PM_SDK_SERVICE_TRANSPORT_VERSION", source)
+            self.assertIn("service->vtable == NULL", source)
 
     def test_generated_interface_can_delegate_to_service(self):
         descriptor = json.loads(json.dumps(VALID))
@@ -240,6 +257,66 @@ class BuilderTests(unittest.TestCase):
         service_offset = int.from_bytes(package[92:96], "little")
         self.assertEqual(int.from_bytes(package[96:100], "little"), 1)
         self.assertEqual(package[service_offset:service_offset + 16], service_id)
+
+    def test_package_elf_accepts_arm_elf32_little_endian_rel(self):
+        descriptor = validate_descriptor(VALID)
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            elf = root / "plugin.elf"
+            output = root / "plugin.pmp"
+            elf.write_bytes(arm_rel_elf())
+            package_elf(descriptor, elf, output, 0xffffffff, "plugin", "1.0")
+            self.assertTrue(output.is_file())
+
+    def test_package_elf_rejects_plugin_id_outside_uint32(self):
+        descriptor = validate_descriptor(VALID)
+        with tempfile.TemporaryDirectory() as directory:
+            elf = Path(directory) / "plugin.elf"
+            elf.write_bytes(arm_rel_elf())
+            for plugin_id in (-1, 0x100000000):
+                with self.subTest(plugin_id=plugin_id):
+                    with self.assertRaisesRegex(DescriptorError, "uint32"):
+                        package_elf(descriptor, elf, Path(directory) / "plugin.pmp",
+                                    plugin_id, "plugin", "1.0")
+
+    def test_package_elf_rejects_non_ascii_metadata(self):
+        descriptor = validate_descriptor(VALID)
+        with tempfile.TemporaryDirectory() as directory:
+            elf = Path(directory) / "plugin.elf"
+            elf.write_bytes(arm_rel_elf())
+            with self.assertRaisesRegex(DescriptorError, "ASCII"):
+                package_elf(descriptor, elf, Path(directory) / "plugin.pmp",
+                            1, "plugin-\N{SNOWMAN}", "1.0")
+
+    def test_package_elf_rejects_wrong_elf_headers(self):
+        descriptor = validate_descriptor(VALID)
+        cases = {
+            "short": b"not an ELF",
+            "elf64": b"\x7fELF\x02\x01\x01" + bytes(45),
+            "big-endian": b"\x7fELF\x01\x02\x01" + bytes(45),
+            "executable": bytearray(arm_rel_elf()),
+            "not-arm": bytearray(arm_rel_elf()),
+            "bad-header-size": bytearray(arm_rel_elf()),
+        }
+        struct.pack_into("<H", cases["executable"], 16, 2)
+        struct.pack_into("<H", cases["not-arm"], 18, 3)
+        struct.pack_into("<H", cases["bad-header-size"], 40, 0)
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for label, image in cases.items():
+                with self.subTest(label=label):
+                    elf = root / f"{label}.elf"
+                    elf.write_bytes(image)
+                    with self.assertRaisesRegex(DescriptorError, "ELF"):
+                        package_elf(descriptor, elf, root / "plugin.pmp",
+                                    1, "plugin", "1.0")
+
+    def test_package_elf_wraps_io_errors(self):
+        descriptor = validate_descriptor(VALID)
+        with mock.patch.object(Path, "read_bytes", side_effect=OSError("denied")):
+            with self.assertRaisesRegex(DescriptorError, "cannot read ELF"):
+                package_elf(descriptor, Path("plugin.elf"), Path("plugin.pmp"),
+                            1, "plugin", "1.0")
 
     def test_generated_target_build_contract(self):
         descriptor = validate_descriptor(VALID)

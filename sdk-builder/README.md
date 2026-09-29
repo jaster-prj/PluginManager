@@ -22,9 +22,10 @@ The generated target project uses the constrained ARM relocatable profile. Build
 it with the Zephyr SDK compiler prefix and the PluginManager source directory:
 
 ```text
-cmake -S build/example-sdk -B build/example-target -DCMAKE_C_COMPILER=/opt/zephyr-sdk-1.0.1/gnu/arm-zephyr-eabi/bin/arm-zephyr-eabi-gcc \
+cmake -S build/example-sdk -B build/example-target \
   -DPM_ARM_TOOLCHAIN_PREFIX=/opt/zephyr-sdk-1.0.1/gnu/arm-zephyr-eabi/bin/arm-zephyr-eabi \
   -DPLUGIN_MANAGER_DIR=/workspace/PluginManager \
+  -DPM_PLUGIN_SOURCES=/workspace/my-plugin/plugin.c \
   -DPM_PLUGIN_ID=42 -DPM_PLUGIN_NAME=example-plugin -DPM_PLUGIN_VERSION=1.0
 cmake --build build/example-target
 ```
@@ -37,6 +38,11 @@ python -m plugin_sdk_builder package \
   --elf plugin.elf --output plugin.pmp \
   --plugin-id 42 --name example-plugin --version 1.0
 ```
+
+The compiler prefix is applied before CMake enables C, so it is sufficient to
+select the cross-compiler. The generated project targets Cortex-M0+ and does not
+create an editable plugin source file. Pass one or more semicolon-separated
+source paths through `PM_PLUGIN_SOURCES`.
 
 The generated descriptor source is emitted in `src/plugin_descriptor.c` and
 uses the PluginManager wire descriptor ABI. The package command creates the

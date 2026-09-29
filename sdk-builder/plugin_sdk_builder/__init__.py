@@ -259,7 +259,7 @@ def validate_descriptor(raw: Any) -> dict[str, Any]:
 def load_descriptor(path: Path) -> dict[str, Any]:
     try:
         raw = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
         raise DescriptorError(f"{path}: cannot read JSON descriptor: {exc}") from exc
     return validate_descriptor(raw)
 
@@ -335,25 +335,26 @@ def generate_sdk(descriptor: dict[str, Any], output: Path) -> None:
         files["src/plugin_descriptor.c"] = _descriptor_source(
             application_bytes, interface_bytes, interface["version"],
             descriptor["required_services"])
-    files["plugin.c"] = """#include \"plugin_manager/plugin_abi.h\"\n#include \"pm_sdk/generated_interfaces.h\"\n#include \"pm_sdk/generated_services.h\"\n#include \"pm_sdk/generated_runtime.h\"\n\n/* Add application-specific method logic here, replacing the generated default\n * method implementations when the plugin type requires behavior. */\n"""
     files["tests/runtime_harness.c"] = _runtime_harness_source(descriptor)
     files["CMakeLists.txt"] = """cmake_minimum_required(VERSION 3.20)
+
+set(PM_ARM_TOOLCHAIN_PREFIX "" CACHE STRING "ARM compiler prefix")
+if(PM_ARM_TOOLCHAIN_PREFIX)
+    set(CMAKE_SYSTEM_NAME Generic)
+    set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
+    set(CMAKE_C_COMPILER "${PM_ARM_TOOLCHAIN_PREFIX}-gcc" CACHE FILEPATH "ARM compiler" FORCE)
+    set(CMAKE_OBJCOPY "${PM_ARM_TOOLCHAIN_PREFIX}-objcopy" CACHE FILEPATH "ARM objcopy" FORCE)
+endif()
 
 project(generated_plugin C)
 enable_testing()
 
 set(PM_SDK_ROOT "${CMAKE_CURRENT_LIST_DIR}" CACHE PATH "Generated PluginManager SDK")
 set(PLUGIN_MANAGER_DIR "" CACHE PATH "PluginManager source directory")
-set(PM_ARM_TOOLCHAIN_PREFIX "" CACHE STRING "ARM compiler prefix")
+set(PM_PLUGIN_SOURCES "" CACHE STRING "Semicolon-separated plugin source files")
 set(PM_PLUGIN_ID 0 CACHE STRING "Plugin ID")
 set(PM_PLUGIN_NAME "" CACHE STRING "Plugin name")
 set(PM_PLUGIN_VERSION "" CACHE STRING "Plugin version")
-if(PM_ARM_TOOLCHAIN_PREFIX)
-    set(CMAKE_SYSTEM_NAME Generic)
-    set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
-    set(CMAKE_C_COMPILER "${PM_ARM_TOOLCHAIN_PREFIX}-gcc" CACHE FILEPATH "ARM compiler" FORCE)
-endif()
-
 set(PM_PLUGIN_TEXT_ORIGIN 0x00000000 CACHE STRING "Plugin text origin")
 set(PM_PLUGIN_TEXT_LENGTH 0x00002000 CACHE STRING "Plugin text length")
 set(PM_PLUGIN_RODATA_ORIGIN 0x00002000 CACHE STRING "Plugin rodata origin")
@@ -364,12 +365,12 @@ configure_file(${CMAKE_CURRENT_LIST_DIR}/cmake/plugin_memory.ld.in
                ${CMAKE_CURRENT_BINARY_DIR}/plugin_memory.ld @ONLY)
 
 if(PM_ARM_TOOLCHAIN_PREFIX)
-    add_executable(plugin plugin.c src/plugin_entry.c src/plugin_descriptor.c)
+    add_executable(plugin ${PM_PLUGIN_SOURCES} src/plugin_entry.c src/plugin_descriptor.c)
     target_include_directories(plugin PRIVATE include "${PM_SDK_ROOT}/include" "${PLUGIN_MANAGER_DIR}/include")
     target_compile_definitions(plugin PRIVATE PM_PLUGIN_ID=${PM_PLUGIN_ID}
         PM_PLUGIN_NAME=\\\"${PM_PLUGIN_NAME}\\\"
         PM_PLUGIN_VERSION=\\\"${PM_PLUGIN_VERSION}\\\")
-    target_compile_options(plugin PRIVATE -mcpu=cortex-m4 -mthumb -mfloat-abi=soft
+    target_compile_options(plugin PRIVATE -mcpu=cortex-m0plus -mthumb -mfloat-abi=soft
         -ffreestanding -fno-builtin -fno-common -ffunction-sections -fdata-sections
         -Wall -Wextra)
     target_link_options(plugin PRIVATE -r -nostdlib -nostartfiles -nodefaultlibs
@@ -394,11 +395,14 @@ add_test(NAME generated_runtime_harness COMMAND runtime_harness)
 INCLUDE "@PLUGIN_MANAGER_DIR@/cmake/plugin_manager_plugin.ld"
 ENTRY(pm_plugin_get_descriptor)
 """
-    output.mkdir(parents=True, exist_ok=True)
-    for relative, content in sorted(files.items()):
-        destination = output / relative
-        destination.parent.mkdir(parents=True, exist_ok=True)
-        destination.write_text(content, encoding="utf-8", newline="\n")
+    try:
+        output.mkdir(parents=True, exist_ok=True)
+        for relative, content in sorted(files.items()):
+            destination = output / relative
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            destination.write_text(content, encoding="utf-8", newline="\n")
+    except (OSError, UnicodeError) as exc:
+        raise DescriptorError(f"{output}: cannot write generated SDK: {exc}") from exc
 
 
 def _uuid_bytes(value: str) -> bytes:
@@ -621,12 +625,15 @@ int pm_plugin_destroy(void *instance)
 
 
 def _service_accessor_source(service: dict[str, Any]) -> str:
+    macro = re.sub(r"[^A-Za-z0-9]", "_", service["name"]).upper()
     return f'''const struct {service['vtable']} *pm_sdk_{service['name']}_get(
     const struct pm_service_table *services)
 {{
     const struct pm_service *service =
-        pm_sdk_service_find(services, &PM_SDK_SERVICE_{re.sub(r"[^A-Za-z0-9]", "_", service['name']).upper()}_ID);
-    return service == NULL ? NULL :
+        pm_sdk_service_find(services, &PM_SDK_SERVICE_{macro}_ID);
+    return service == NULL ||
+        service->version != PM_SDK_SERVICE_{macro}_VERSION ||
+        service->vtable == NULL ? NULL :
         (const struct {service['vtable']} *)service->vtable;
 }}
 '''
@@ -735,9 +742,25 @@ def build_package(image: bytes, application_id: bytes, interface_id: bytes,
 
 def package_elf(descriptor: dict[str, Any], elf: Path, output: Path,
                 plugin_id: int, name: str, version: str) -> None:
-    image = elf.read_bytes()
-    if not image:
-        raise DescriptorError(f"{elf}: ELF file is empty")
+    if isinstance(plugin_id, bool) or not isinstance(plugin_id, int) or not 0 <= plugin_id <= 0xffffffff:
+        raise DescriptorError("plugin-id: expected an integer in the uint32 range")
+    try:
+        name.encode("ascii")
+        version.encode("ascii")
+    except (AttributeError, UnicodeError) as exc:
+        raise DescriptorError("plugin name and version must be ASCII strings") from exc
+    try:
+        image = elf.read_bytes()
+    except OSError as exc:
+        raise DescriptorError(f"{elf}: cannot read ELF file: {exc}") from exc
+    if len(image) < 52:
+        raise DescriptorError(f"{elf}: invalid ELF32 header")
+    if image[:4] != b"\x7fELF" or image[4] != 1 or image[5] != 1 or image[6] != 1:
+        raise DescriptorError(f"{elf}: expected an ELF32 little-endian image")
+    elf_type, machine, elf_version = struct.unpack_from("<HHI", image, 16)
+    header_size = struct.unpack_from("<H", image, 40)[0]
+    if elf_type != 1 or machine != 40 or elf_version != 1 or header_size != 52:
+        raise DescriptorError(f"{elf}: expected an ARM ET_REL ELF image")
     if len(image) > descriptor["limits"]["max_image_size"]:
         raise DescriptorError(f"{elf}: image exceeds max_image_size")
     if not descriptor["interfaces"]:
@@ -745,14 +768,17 @@ def package_elf(descriptor: dict[str, Any], elf: Path, output: Path,
     interface = descriptor["interfaces"][0]
     if len(name) > descriptor["limits"]["name_max"] or len(version) > descriptor["limits"]["version_max"]:
         raise DescriptorError("plugin name or version exceeds descriptor limits")
-    package = build_package(
-        image, _uuid_bytes(descriptor["application"]["id"]),
-        _uuid_bytes(interface["id"]), interface["version"], plugin_id,
-        name, version, descriptor["limits"]["max_ram_size"],
-        descriptor["limits"]["max_stack_size"],
-        [_uuid_bytes(value) for value in descriptor["required_services"]])
-    output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_bytes(package)
+    try:
+        package = build_package(
+            image, _uuid_bytes(descriptor["application"]["id"]),
+            _uuid_bytes(interface["id"]), interface["version"], plugin_id,
+            name, version, descriptor["limits"]["max_ram_size"],
+            descriptor["limits"]["max_stack_size"],
+            [_uuid_bytes(value) for value in descriptor["required_services"]])
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_bytes(package)
+    except (OSError, UnicodeError) as exc:
+        raise DescriptorError(f"{output}: cannot write package: {exc}") from exc
 
 
 def main(argv: list[str] | None = None) -> int:
