@@ -1,0 +1,5 @@
+tests:
+  plugin_manager.zephyr:
+    tags:
+      - plugin_manager
+      - ztest

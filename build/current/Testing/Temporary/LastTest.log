@@ -1,0 +1,51 @@
+Start testing: Sep 29 18:24 UTC
+----------------------------------------------------------
+1/3 Testing: plugin_manager_tests
+1/3 Test: plugin_manager_tests
+Command: "/workspace/build/current/plugin_manager_tests"
+Directory: /workspace/build/current
+"plugin_manager_tests" start time: Sep 29 18:24 UTC
+Output:
+----------------------------------------------------------
+PluginManager tests passed
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"plugin_manager_tests" end time: Sep 29 18:24 UTC
+"plugin_manager_tests" time elapsed: 00:00:00
+----------------------------------------------------------
+
+2/3 Testing: plugin_manager_elf_tests
+2/3 Test: plugin_manager_elf_tests
+Command: "/workspace/build/current/plugin_manager_elf_tests"
+Directory: /workspace/build/current
+"plugin_manager_elf_tests" start time: Sep 29 18:24 UTC
+Output:
+----------------------------------------------------------
+PluginManager ELF tests passed
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"plugin_manager_elf_tests" end time: Sep 29 18:24 UTC
+"plugin_manager_elf_tests" time elapsed: 00:00:00
+----------------------------------------------------------
+
+3/3 Testing: plugin_manager_descriptor_tests
+3/3 Test: plugin_manager_descriptor_tests
+Command: "/workspace/build/current/plugin_manager_descriptor_tests"
+Directory: /workspace/build/current
+"plugin_manager_descriptor_tests" start time: Sep 29 18:24 UTC
+Output:
+----------------------------------------------------------
+PluginManager descriptor tests passed
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"plugin_manager_descriptor_tests" end time: Sep 29 18:24 UTC
+"plugin_manager_descriptor_tests" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: Sep 29 18:24 UTC

@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "plugin-sdk-builder"
+version = "0.2.0"
+description = "Host-side SDK builder for PluginManager application contracts"
+requires-python = ">=3.10"
+
+[project.scripts]
+plugin-sdk-builder = "plugin_sdk_builder:main"
+
+[tool.setuptools]
+packages = ["plugin_sdk_builder"]

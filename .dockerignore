@@ -1,0 +1,5 @@
+.git
+.devcontainer
+build
+sdk-builder/**/__pycache__
+*.pyc

@@ -1,0 +1,12 @@
+services:
+  plugin-manager:
+    build:
+      context: .
+      dockerfile: .devcontainer/Dockerfile
+    container_name: PluginManager_Devcontainer
+    working_dir: /workspace
+    volumes:
+      - .:/workspace
+    command: ["sleep", "infinity"]
+    tty: true
+    stdin_open: true

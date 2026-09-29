@@ -1,0 +1,23 @@
+menuconfig PLUGIN_MANAGER
+	bool "PluginManager"
+	default y
+	help
+	  Enable the generic PluginManager framework.
+
+if PLUGIN_MANAGER
+
+config PLUGIN_MANAGER_MAX_PLUGINS
+	int "Maximum registered plugins"
+	default 16
+	depends on PLUGIN_MANAGER
+
+config PLUGIN_MANAGER_ZEPHYR_FS
+	bool "Zephyr filesystem adapter"
+	default y
+	depends on PLUGIN_MANAGER
+	depends on FILE_SYSTEM
+	help
+	  Enable filesystem-backed package discovery using an application-owned
+	  mounted Zephyr filesystem.
+
+endif

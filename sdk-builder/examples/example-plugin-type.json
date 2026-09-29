@@ -1,0 +1,68 @@
+{
+  "schema": "plugin-manager/plugin-type-1",
+  "framework": {
+    "abi_version": 1,
+    "package_format": 1,
+    "package_suffix": ".pmp"
+  },
+  "application": {
+    "id": "00112233-4455-6677-8899-aabbccddeeff",
+    "version": 1,
+    "name": "Example Application"
+  },
+  "plugin_type": {
+    "id": "11223344-5566-7788-99aa-bbccddeeff00",
+    "version": 1,
+    "name": "Example Device"
+  },
+  "target": {
+    "architecture": "arm-cortex-m",
+    "cpu": "cortex-m0plus",
+    "abi": "aapcs"
+  },
+  "interfaces": [
+    {
+      "id": "22334455-6677-8899-aabb-ccddeeff0011",
+      "name": "example_device",
+      "version": 1,
+      "instance_type": "example_instance",
+      "methods": [
+        {
+          "name": "measure",
+          "return": "int32",
+          "default_service": "transport",
+          "default_method": "measure",
+          "parameters": [
+            {"name": "instance", "type": "pointer(void)"},
+            {"name": "result", "type": "pointer(example_result)", "direction": "out"}
+          ]
+        }
+      ]
+    }
+  ],
+  "services": [
+    {
+      "id": "33445566-7788-99aa-bbcc-ddeeff001122",
+      "name": "transport",
+      "version": 1,
+      "vtable": "transport_api",
+      "methods": [
+        {
+          "name": "measure",
+          "return": "int32",
+          "parameters": [
+            {"name": "result", "type": "pointer(example_result)"}
+          ]
+        }
+      ]
+    }
+  ],
+  "required_services": ["33445566-7788-99aa-bbcc-ddeeff001122"],
+  "limits": {
+    "name_max": 63,
+    "version_max": 31,
+    "max_image_size": 8192,
+    "max_ram_size": 8192,
+    "max_stack_size": 2048
+  }
+}

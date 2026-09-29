@@ -1,0 +1,12 @@
+/workspace/build/container/CMakeFiles/plugin_manager.dir
+/workspace/build/container/CMakeFiles/plugin_manager_tests.dir
+/workspace/build/container/CMakeFiles/plugin_manager_elf_tests.dir
+/workspace/build/container/CMakeFiles/plugin_manager_descriptor_tests.dir
+/workspace/build/container/CMakeFiles/plugin_manager_package_tool.dir
+/workspace/build/container/CMakeFiles/test.dir
+/workspace/build/container/CMakeFiles/edit_cache.dir
+/workspace/build/container/CMakeFiles/rebuild_cache.dir
+/workspace/build/container/CMakeFiles/list_install_components.dir
+/workspace/build/container/CMakeFiles/install.dir
+/workspace/build/container/CMakeFiles/install/local.dir
+/workspace/build/container/CMakeFiles/install/strip.dir

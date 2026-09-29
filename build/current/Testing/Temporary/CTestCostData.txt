@@ -1,0 +1,4 @@
+plugin_manager_tests 3 0.00149646
+plugin_manager_elf_tests 2 0.00215083
+plugin_manager_descriptor_tests 5 0.000773065
+---

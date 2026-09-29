@@ -1,0 +1,15 @@
+{
+  "name": "PluginManager",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+  "runArgs": [
+    "--name=PluginManager_Devcontainer"
+  ],
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind",
+  "workspaceFolder": "/workspace",
+  "remoteUser": "root",
+  "overrideCommand": false,
+  "postCreateCommand": "cmake -S . -B build/container -DPM_BUILD_TESTS=ON"
+}

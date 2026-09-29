@@ -1,0 +1,18 @@
+# ninja log v6
+503	652	1790619233754124500	plugin_manager_package_tool	56bb69e2565cd8d6
+168	287	1790619233421606200	CMakeFiles/plugin_manager_package_tool.dir/tests/package_tool.c.o	2d4fea4ac2324507
+110	225	1790618699380298200	CMakeFiles/plugin_manager.dir/src/plugin_elf.c.o	d370db8658771595
+486	728	1790619233737298300	plugin_manager_tests	72420a11e9454f28
+300	484	1790619233550610000	libplugin_manager.a	1144f342f96464cd
+149	310	1790619233406101900	CMakeFiles/plugin_manager_tests.dir/tests/plugin_manager_tests.c.o	a8abb3170aa92ec
+106	181	1790618814280776000	CMakeFiles/plugin_manager.dir/src/plugin_target_arm.c.o	bf4c7634be97976c
+491	659	1790619233743314100	plugin_manager_elf_tests	d62efd9baca9840d
+132	262	1790618699400281800	CMakeFiles/plugin_manager_elf_tests.dir/tests/plugin_elf_tests.c.o	ac44b351009992da
+100	208	1790618814275776700	CMakeFiles/plugin_manager.dir/src/plugin_descriptor_bind.c.o	74af2f34cf109fa7
+497	667	1790619233749128700	plugin_manager_descriptor_tests	ff09f4467cc175d0
+118	242	1790618814293557800	CMakeFiles/plugin_manager_descriptor_tests.dir/tests/plugin_descriptor_tests.c.o	158ad4cfcecef951
+160	279	1790619233414928200	CMakeFiles/plugin_manager_tests.dir/tests/plugin_fixture.c.o	75ca27494c6b1dd9
+44	143	1790606663637741200	CMakeFiles/plugin_manager.dir/src/plugin_registry.c.o	a901b7f795751258
+141	267	1790619233395819400	CMakeFiles/plugin_manager.dir/src/plugin_package.c.o	294c78a7a4064fdc
+134	297	1790619233386813300	CMakeFiles/plugin_manager.dir/src/plugin_manager.c.o	2946f6f8f6829467
+94	198	1790618814269269200	CMakeFiles/plugin_manager.dir/src/plugin_descriptor.c.o	148e5e55f51814c0
