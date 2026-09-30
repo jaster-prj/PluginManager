@@ -32,11 +32,7 @@ Source: [`instance_lifecycle.puml`](../diagram_as_code/06_runtime_view/instance_
 
 Application calls into the plugin occur outside PluginManager; serialize them against destroy/unload. Failed `pm_manager_destroy_instance()` preserves the instance and its services. `pm_manager_destroy()` instead ignores plugin destroy errors, releases services/images and returns `void`; applications should explicitly destroy first. Unload with an active instance returns `PM_EBUSY`.
 
-## 6.5 External Reference Flow
-
-The externally maintained EF800 NUCLEO-G0B1RE host mounts preformatted SPI NOR FAT, installs embedded ELTA3/FTS3XX packages only if absent, scans `/plugins`, loads one selected package into bounded SRAM, injects an application-owned USART1 service and invokes typed measurement operations from its shell. It uses trusted packages and disables the MPU. Its source and hardware evidence are not versioned in this repository.
-
-## 6.6 Future Supervised Execution
+## 6.5 Future Supervised Execution
 
 ![Future supervised execution](../diagram_as_code/out/06_runtime_view/future_supervision.svg)
 

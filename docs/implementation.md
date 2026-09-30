@@ -1,7 +1,7 @@
 # PluginManager Implementation Steps
 
-This plan implements the reusable framework before adding EF800-specific
-behavior. Each phase should leave the framework buildable and testable.
+This plan implements the reusable framework. Each phase should leave the
+framework buildable and testable.
 
 This is a historical implementation plan and dated status record. The
 authoritative description of implemented behavior, constraints, risks, and
@@ -85,9 +85,8 @@ which identifies the connected part as W25Q64-class, 64 Mbit / 8 MiB.
 - SDK generation exists, but release/version policy and broader target profiles
   are not implemented.
 - Host shared-library runtime is not implemented.
-- Filesystem discovery is implemented and the NUCLEO test writes its embedded
-  fixture to W25Q64-backed FAT before scanning and loading it. A clean firmware
-  build passes; the updated FAT path still requires physical-board execution.
+- Filesystem discovery is implemented; application-owned FAT integration and
+  physical-board verification remain deployment-specific.
 - The physical smoke test executes plugin text from RAM with MPU disabled.
   Production deployment needs an executable RAM region with an explicit MPU
   policy, or a memory-mapped executable flash controller.
@@ -113,7 +112,7 @@ execution in the proven RAM path until storage is validated independently.
 
 Exit criteria:
 
-- The module can be added to a Zephyr application without EF800 sources.
+- The module can be added to a Zephyr application without application-specific sources.
 - Public headers compile as C11 and C++17-compatible headers.
 - The host SDK-builder runs without Zephyr installed.
 

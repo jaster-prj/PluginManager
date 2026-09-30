@@ -65,7 +65,7 @@ Manager callbacks run synchronously in the caller's context and, during mutating
 
 - **Repository CI:** portable host tests and Python SDK-builder tests.
 - **Defined but not run in repository CI:** optional ARM fixture and Zephyr native-sim tests.
-- **External evidence:** application-owned protocol replay and physical NUCLEO tests, requiring an externally versioned application/hardware record.
+- **External evidence:** application-owned protocol replay and physical target tests require application-owned hardware records.
 
 **Future:** sanitizer/fuzz builds, malformed corpus, generated-SDK compilation, concurrency stress, signature vectors, fault/MPU and power-loss tests, and hardware-in-loop execution.
 

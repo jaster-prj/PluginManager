@@ -4,10 +4,6 @@ This documentation follows [arc42](https://arc42.org/). **Current** describes
 behavior implemented in PluginManager; **Future** describes target architecture
 and outstanding needs, not guarantees of the current implementation.
 
-The EF800 NUCLEO-G0B1RE measurement host is an externally maintained reference
-deployment. Its application-specific measurement, UART, storage and UI behavior
-does not belong to the PluginManager framework.
-
 ## Architecture
 
 1. [Introduction and goals](./01-Introduction_and_Goals/introduction.md)
