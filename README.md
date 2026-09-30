@@ -186,8 +186,9 @@ west twister -T /path/to/PluginManager/tests/zephyr \
 - No persistent plugin configuration.
 - Production targets must define and validate an executable-memory policy.
 
-See `docs/architecture.md` and `docs/implementation.md` for design details and
-the current implementation status.
+See the authoritative [arc42 architecture](docs/index.md) for current and
+future architecture, and `docs/implementation.md` for the historical
+implementation plan and status notes.
 
 ## License
 

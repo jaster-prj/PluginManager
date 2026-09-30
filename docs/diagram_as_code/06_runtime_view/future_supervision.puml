@@ -1,0 +1,24 @@
+@startuml future_supervision
+title Future supervised execution
+actor Application as app
+participant "Trust policy" as trust
+participant PluginManager as pm
+participant "Executable memory provider" as memory
+participant "Execution supervisor" as supervisor
+participant Plugin as plugin
+
+app -> trust : verify signature, version and rollback counter
+trust --> app : approved capabilities
+app -> pm : staged load
+pm -> memory : allocate RW image regions
+pm -> pm : validate and relocate
+pm -> memory : seal text RX, rodata R, data RW/NX
+app -> supervisor : invoke with stack and deadline
+supervisor -> plugin : typed operation
+alt completes
+  plugin --> supervisor : result
+else deadline or fault
+  supervisor -> supervisor : contain and record failure
+end
+supervisor --> app : result or fault status
+@enduml

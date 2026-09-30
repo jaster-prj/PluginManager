@@ -1,0 +1,22 @@
+@startuml instance_lifecycle
+title Plugin instance lifecycle
+actor Application as app
+participant PluginManager as pm
+participant Plugin as plugin
+
+app -> pm : create_instance(plugin ID)
+pm -> pm : build retained filtered service table
+pm -> plugin : descriptor.create(services)
+plugin --> pm : instance
+pm --> app : PM_OK
+app -> pm : get_instance(plugin ID)
+pm --> app : opaque instance
+app -> plugin : application-typed method call
+plugin --> app : typed result
+app -> pm : destroy_instance(plugin ID)
+pm -> plugin : descriptor.destroy(instance)
+plugin --> pm : status
+pm --> app : status
+app -> pm : unload(plugin ID)
+pm --> app : status
+@enduml

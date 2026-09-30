@@ -1,0 +1,25 @@
+@startuml business_context
+title PluginManager - Business context
+left to right direction
+skinparam componentStyle rectangle
+
+actor "Plugin developer" as developer
+actor "Operator / application policy" as operator
+component "SDK and package tooling" as tooling
+folder "Application-owned storage" as storage
+component "Consuming application" as app
+component "PluginManager" as pm #SkyBlue
+component "Plugin instance" as plugin
+component "Application services" as services
+component "Hardware and application state" as hardware
+
+developer --> tooling : contract SDK and source
+tooling --> storage : PMP artifact
+operator --> app : select, load, invoke
+app --> pm : scan and lifecycle calls
+pm --> storage : read callbacks
+pm --> plugin : filtered service table
+app --> plugin : typed interface calls
+plugin --> services : cooperative service calls
+services --> hardware : application-owned access
+@enduml

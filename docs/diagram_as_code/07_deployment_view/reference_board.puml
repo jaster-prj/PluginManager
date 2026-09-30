@@ -1,0 +1,21 @@
+@startuml reference_board
+title External EF800 NUCLEO reference deployment
+left to right direction
+skinparam componentStyle rectangle
+
+component "PC terminal" as terminal
+node "NUCLEO-G0B1RE" as nucleo {
+  component "PluginManager in firmware" as pm
+  component "Internal SRAM plugin regions" as sram
+  component "EF800 measurement host" as host
+}
+database "W25Q64-class NOR FAT" as nor
+component "3.3 V UART instrument or simulator" as instrument
+
+terminal --> nucleo : ST-LINK USART2
+nucleo --> nor : SPI1
+nor --> pm : PMP files
+pm --> sram : copy and relocate
+sram --> host : native Thumb calls
+host --> instrument : USART1 PC4/PC5
+@enduml

@@ -1,0 +1,33 @@
+@startuml technical_context
+title PluginManager - Technical context and boundary
+left to right direction
+skinparam componentStyle rectangle
+
+package "Consuming application" {
+  component "Application contract" as contract
+  component "Selection, trust and lifecycle policy" as policy
+  component "Image memory and execution policy" as memory
+  component "Typed services" as services
+  folder "Mounted storage" as storage
+}
+package "PluginManager" {
+  component "Manager and registry" as manager
+  component "Package parser" as package
+  component "ELF loader" as elf
+  component "Wire descriptor binder" as descriptor
+  component "Zephyr filesystem adapter" as fs
+}
+component "Application-specific plugin" as plugin
+
+policy --> manager
+contract --> manager
+storage --> fs
+fs --> manager
+manager --> package
+package --> elf
+elf --> descriptor
+memory --> elf
+services --> manager
+manager --> plugin : filtered service table
+policy --> plugin : typed invocation
+@enduml

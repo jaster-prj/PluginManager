@@ -1,0 +1,11 @@
+@startuml static_registration
+title Manager creation and static registration
+actor Application as app
+participant PluginManager as pm
+
+app -> pm : pm_manager_create(contract and capacity)
+pm --> app : manager or error
+app -> pm : pm_manager_register_static(descriptor)
+pm -> pm : validate descriptor and exact interface
+pm --> app : PM_OK
+@enduml

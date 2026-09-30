@@ -1,0 +1,15 @@
+@startuml discovery
+title Package discovery
+actor Application as app
+participant PluginManager as pm
+participant "Storage adapter" as storage
+
+app -> pm : scan(config)
+loop each candidate
+  pm -> storage : list, size, read complete package
+  storage --> pm : name, size, bytes
+  pm -> pm : validate manifest structure and ELF-image CRC
+  pm -> pm : retain matching application UUID / unique plugin ID
+end
+pm --> app : available metadata
+@enduml

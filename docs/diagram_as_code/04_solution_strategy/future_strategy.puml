@@ -1,0 +1,22 @@
+@startuml future_strategy
+title PluginManager - Future solution strategy
+left to right direction
+skinparam componentStyle rectangle
+
+component "Reproducible plugin artifact" as artifact
+component "Offline signing" as signing
+component "Authenticity, compatibility\nand rollback verification" as verify
+component "Atomic staging and\nknown-good fallback" as staging
+component "Streaming validation and\nbounded loading" as loading
+component "W^X MPU permissions and\ncache synchronization" as protection
+component "Supervised execution" as execution
+component "Timeout, stack, fault\nand quota monitoring" as monitoring
+
+artifact --> signing
+signing --> verify
+verify --> staging
+staging --> loading
+loading --> protection
+protection --> execution
+execution --> monitoring
+@enduml

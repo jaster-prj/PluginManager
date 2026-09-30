@@ -1,0 +1,27 @@
+@startuml level_1
+title PluginManager - Level 1 building blocks
+left to right direction
+skinparam componentStyle rectangle
+
+component "Public framework API" as api
+component "Runtime manager" as runtime #SkyBlue
+component "Contract and plugin registry" as registry
+component "Package codec" as package
+component "ELF loader" as loader
+component "Wire descriptor subsystem" as wire
+component "ARM target adapter" as arm
+component "Storage adapters" as storage
+component "SDK builder and package writer" as sdk
+component "Host and Zephyr integration" as build
+
+api --> runtime
+runtime --> registry
+runtime --> package
+runtime --> loader
+runtime --> wire
+wire --> arm
+runtime --> storage
+sdk --> package
+sdk --> loader
+build --> runtime
+@enduml

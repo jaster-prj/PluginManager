@@ -1,0 +1,22 @@
+@startuml load_and_bind
+title Package load and wire descriptor binding
+actor Application as app
+participant PluginManager as pm
+participant "Storage adapter" as storage
+participant "ELF loader" as elf
+
+app -> pm : load_available(index, config)
+pm -> storage : reread recorded byte count
+storage --> pm : package bytes
+pm -> pm : parse, CRC, application and declared-limit checks
+pm -> app : allocate buffers, unless fixed buffers supplied
+app --> pm : image regions
+pm -> elf : validate, copy, clear BSS and relocate
+elf --> pm : image and descriptor offset
+pm -> pm : decode wire descriptor
+pm -> app : adapt target entry addresses
+app --> pm : native runtime descriptor
+pm -> pm : cross-check identity and required services
+pm -> pm : validate exact interface and register
+pm --> app : plugin ID
+@enduml

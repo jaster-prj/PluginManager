@@ -3,6 +3,10 @@
 This plan implements the reusable framework before adding EF800-specific
 behavior. Each phase should leave the framework buildable and testable.
 
+This is a historical implementation plan and dated status record. The
+authoritative description of implemented behavior, constraints, risks, and
+future architecture is the [arc42 documentation](index.md).
+
 ## Current Implementation Status
 
 Status date: 2026-09-29
