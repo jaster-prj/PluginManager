@@ -3,7 +3,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifndef PM_MANAGER_MAX_DISCOVERED
 #define PM_MANAGER_MAX_DISCOVERED 64u
+#endif
 #define PM_MANAGER_MAX_NAME 127u
 #define PM_MANAGER_MAX_REQUIRED_SERVICES 64u
 
@@ -198,6 +200,7 @@ static int has_suffix(const char *name, const char *suffix)
 {
     size_t name_length;
     size_t suffix_length;
+    size_t index;
 
     if (name == NULL) {
         return 0;
@@ -210,8 +213,24 @@ static int has_suffix(const char *name, const char *suffix)
     }
     name_length = strlen(name);
     suffix_length = strlen(suffix);
-    return name_length >= suffix_length &&
-           strcmp(name + name_length - suffix_length, suffix) == 0;
+    if (name_length < suffix_length) {
+        return 0;
+    }
+    for (index = 0u; index < suffix_length; ++index) {
+        char name_char = name[name_length - suffix_length + index];
+        char suffix_char = suffix[index];
+
+        if (name_char >= 'A' && name_char <= 'Z') {
+            name_char = (char)(name_char - 'A' + 'a');
+        }
+        if (suffix_char >= 'A' && suffix_char <= 'Z') {
+            suffix_char = (char)(suffix_char - 'A' + 'a');
+        }
+        if (name_char != suffix_char) {
+            return 0;
+        }
+    }
+    return 1;
 }
 
 int pm_manager_scan(struct pm_manager *manager,
@@ -274,8 +293,8 @@ int pm_manager_scan(struct pm_manager *manager,
         }
         status = config->storage->read(config->storage->context, name, 0u,
                                        package, package_size);
-        if (status != PM_OK ||
-            pm_package_parse(package, package_size, &manifest) != PM_OK) {
+        status = pm_package_parse(package, package_size, &manifest);
+        if (status != PM_OK) {
             free(package);
             continue;
         }

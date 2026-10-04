@@ -238,7 +238,8 @@ static int address_for_section(uint16_t index, uint16_t text, uint16_t rodata,
 static int apply_relocations(const uint8_t *buffer, size_t size,
                              uint16_t count, uint32_t shoff, uint16_t symtab,
                              uint16_t text, uint16_t rodata, uint16_t data,
-                             uint16_t bss, const struct pm_elf_profile *profile,
+                              uint16_t bss, const struct pm_elf_profile *profile,
+                              uint32_t descriptor_value,
                              uint8_t *text_storage, uint8_t *rodata_storage,
                              size_t text_size, size_t rodata_size,
                              uint8_t *data_storage, size_t data_size,
@@ -272,6 +273,7 @@ static int apply_relocations(const uint8_t *buffer, size_t size,
             uint32_t symbol_index = rel_info >> 8u;
             uint32_t relocation_type = rel_info & 0xFFu;
             uint32_t symbol_value;
+            uint8_t symbol_type;
             uint16_t symbol_section;
             uint32_t symbol_base;
             uint32_t resolved;
@@ -283,6 +285,7 @@ static int apply_relocations(const uint8_t *buffer, size_t size,
                 return PM_ENOTSUP;
             }
             symbol_value = u32(buffer, symoff + symbol_index * ELF32_SYM_SIZE + 4u);
+            symbol_type = buffer[symoff + symbol_index * ELF32_SYM_SIZE + 12u] & 0x0Fu;
             symbol_section = u16(buffer, symoff + symbol_index * ELF32_SYM_SIZE + 14u);
             name = u32(buffer, symoff + symbol_index * ELF32_SYM_SIZE);
             if (name >= strlen_value ||
@@ -304,13 +307,48 @@ static int apply_relocations(const uint8_t *buffer, size_t size,
             } else {
                 if (symbol_section == 0xFFF1u) {
                     resolved = symbol_value;
-                } else if (address_for_section(symbol_section, text, rodata, data,
-                                                bss, profile, data_size,
-                                                &symbol_base) != PM_OK) {
-                    return PM_EPROTO;
                 } else {
-                    resolved = symbol_base + symbol_value;
+                    if (symbol_section == text) {
+                        /* Descriptor function fields retain ELF-relative
+                         * Thumb addresses; the target adapter relocates them
+                         * after decoding. Other references need RAM pointers.
+                         */
+                        if (info == rodata &&
+                            (rel_address == descriptor_value + 72u ||
+                             rel_address == descriptor_value + 76u)) {
+                            resolved = symbol_value;
+                        } else {
+                            resolved = (uint32_t)(uintptr_t)text_storage +
+                                       (symbol_value < profile->text_address ?
+                                        symbol_value :
+                                        symbol_value - profile->text_address);
+                        }
+                    } else if (symbol_section == rodata) {
+                        resolved = (uint32_t)(uintptr_t)rodata_storage +
+                                   (symbol_value < profile->rodata_address ?
+                                    symbol_value :
+                                    symbol_value - profile->rodata_address);
+                    } else if (symbol_section == data) {
+                        resolved = (uint32_t)(uintptr_t)data_storage +
+                                   (symbol_value < profile->data_address ?
+                                    symbol_value :
+                                    symbol_value - profile->data_address);
+                    } else if (symbol_section == bss) {
+                        resolved = (uint32_t)(uintptr_t)bss_storage +
+                                   (symbol_value < profile->data_address ?
+                                    symbol_value :
+                                    symbol_value - profile->data_address);
+                    } else if (address_for_section(symbol_section, text, rodata,
+                                                   data, bss, profile, data_size,
+                                                   &symbol_base) != PM_OK) {
+                        return PM_EPROTO;
+                    } else {
+                        resolved = symbol_base + symbol_value;
+                    }
                 }
+            }
+            if (symbol_section == text && symbol_type == 2u) {
+                resolved |= 1u;
             }
             if (info == text) {
                 target = text_storage; target_size = text_size;
@@ -324,7 +362,7 @@ static int apply_relocations(const uint8_t *buffer, size_t size,
             if (!range(rel_address, 4u, target_size)) {
                 return PM_EOVERFLOW;
             }
-            /* R_ARM_ABS32 uses the existing word as the addend. */
+            /* R_ARM_ABS32 always applies the existing word as addend. */
             put32(target + rel_address, resolved + u32(target, rel_address));
         }
     }
@@ -485,11 +523,12 @@ int pm_elf_load(const uint8_t *buffer, size_t buffer_size,
     result->text_address = profile->text_address;
     result->rodata_address = profile->rodata_address;
     status = apply_relocations(buffer, buffer_size, count, shoff, symtab, text,
-                               rodata, data, bss, profile, text_storage,
+                               rodata, data, bss, profile, descriptor_value,
+                               text_storage,
                                rodata_storage, result->text_size,
                                result->rodata_size,
                                data_storage, result->data_size,
-                               bss_storage, result->bss_size,
+                                bss_storage, result->bss_size,
                                resolve, resolve_context);
     return status;
 }
