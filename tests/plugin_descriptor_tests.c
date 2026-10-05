@@ -57,14 +57,14 @@ static void test_decode(void)
 
 static void test_rejects_malformed(void)
 {
-    uint8_t rodata[80u] = {0};
+    uint8_t rodata[PM_WIRE_DESCRIPTOR_HEADER_SIZE] = {0};
     struct pm_elf_image image = {.rodata = rodata, .rodata_size = sizeof(rodata)};
     struct pm_wire_plugin_descriptor descriptor;
 
     put32(rodata, 0u, PM_WIRE_DESCRIPTOR_MAGIC);
     put16(rodata, 4u, PM_WIRE_DESCRIPTOR_VERSION);
     put16(rodata, 6u, PM_WIRE_DESCRIPTOR_HEADER_SIZE);
-    assert(pm_wire_descriptor_decode(&image, 1u, &descriptor) == PM_EINVAL);
+    assert(pm_wire_descriptor_decode(&image, 1u, &descriptor) == PM_EPROTO);
     assert(pm_wire_descriptor_decode(&image, 0u, &descriptor) == PM_EPROTO);
     put32(rodata, 0u, PM_WIRE_DESCRIPTOR_MAGIC);
     put32(rodata, 48u, PM_WIRE_DESCRIPTOR_MAX_REQUIRED_SERVICES + 1u);

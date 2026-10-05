@@ -46,7 +46,7 @@ int pm_wire_descriptor_decode(const struct pm_elf_image *image,
     uint32_t extension_size = 0u;
 
     if (image == NULL || result == NULL || image->rodata == NULL ||
-        !range(descriptor_offset, PM_WIRE_DESCRIPTOR_HEADER_SIZE,
+        !range(descriptor_offset, 80u,
                image->rodata_size)) {
         return PM_EINVAL;
     }
@@ -57,7 +57,8 @@ int pm_wire_descriptor_decode(const struct pm_elf_image *image,
     descriptor_version = read_u16(buffer, 4u);
     descriptor_size = read_u16(buffer, 6u);
     if ((descriptor_version != 1u && descriptor_version != PM_WIRE_DESCRIPTOR_VERSION) ||
-        descriptor_size < PM_WIRE_DESCRIPTOR_HEADER_SIZE ||
+        descriptor_size < (descriptor_version == 1u ? 80u :
+                           PM_WIRE_DESCRIPTOR_HEADER_SIZE) ||
         descriptor_size > image->rodata_size - descriptor_offset) {
         return PM_EPROTO;
     }
