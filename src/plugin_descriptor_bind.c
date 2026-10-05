@@ -22,6 +22,8 @@ int pm_wire_descriptor_bind(const struct pm_wire_plugin_descriptor *wire,
         .required_service_count = wire->required_service_count,
         .name = wire->name,
         .version = wire->version,
+        .extension = wire->extension,
+        .extension_size = wire->extension_size,
     };
     status = pm_elf_resolve_entry(image, wire->create_address,
                                    PM_ELF_ENTRY_CREATE, config->resolve,

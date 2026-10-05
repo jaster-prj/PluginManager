@@ -133,7 +133,9 @@ int pm_manager_load_available(struct pm_manager *manager, size_t index,
 int pm_manager_create_instance(struct pm_manager *manager, uint32_t plugin_id);
 int pm_manager_destroy_instance(struct pm_manager *manager, uint32_t plugin_id);
 int pm_manager_get_instance(struct pm_manager *manager, uint32_t plugin_id,
-                            void **instance);
+                             void **instance);
+int pm_manager_get_descriptor(struct pm_manager *manager, uint32_t plugin_id,
+                              const struct pm_plugin_descriptor **descriptor);
 
 /* Used by platform storage adapters to bind their resource lifetime. */
 int pm_manager_filesystem_attach(struct pm_manager *manager,

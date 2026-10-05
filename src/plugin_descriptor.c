@@ -42,6 +42,8 @@ int pm_wire_descriptor_decode(const struct pm_elf_image *image,
     uint32_t name_size;
     uint32_t version_offset;
     uint32_t version_size;
+    uint32_t extension_offset = 0u;
+    uint32_t extension_size = 0u;
 
     if (image == NULL || result == NULL || image->rodata == NULL ||
         !range(descriptor_offset, PM_WIRE_DESCRIPTOR_HEADER_SIZE,
@@ -54,7 +56,7 @@ int pm_wire_descriptor_decode(const struct pm_elf_image *image,
     }
     descriptor_version = read_u16(buffer, 4u);
     descriptor_size = read_u16(buffer, 6u);
-    if (descriptor_version != PM_WIRE_DESCRIPTOR_VERSION ||
+    if ((descriptor_version != 1u && descriptor_version != PM_WIRE_DESCRIPTOR_VERSION) ||
         descriptor_size < PM_WIRE_DESCRIPTOR_HEADER_SIZE ||
         descriptor_size > image->rodata_size - descriptor_offset) {
         return PM_EPROTO;
@@ -65,6 +67,10 @@ int pm_wire_descriptor_decode(const struct pm_elf_image *image,
     name_size = read_u32(buffer, 60u);
     version_offset = read_u32(buffer, 64u);
     version_size = read_u32(buffer, 68u);
+    if (descriptor_version >= 2u) {
+        extension_offset = read_u32(buffer, 80u);
+        extension_size = read_u32(buffer, 84u);
+    }
     if (required_count > PM_WIRE_DESCRIPTOR_MAX_REQUIRED_SERVICES) {
         return PM_EOVERFLOW;
     }
@@ -73,7 +79,8 @@ int pm_wire_descriptor_decode(const struct pm_elf_image *image,
         !string_range(image->rodata, name_offset, name_size,
                       image->rodata_size, PM_MAX_NAME_LENGTH + 1u) ||
         !string_range(image->rodata, version_offset, version_size,
-                      image->rodata_size, PM_MAX_VERSION_LENGTH + 1u)) {
+                      image->rodata_size, PM_MAX_VERSION_LENGTH + 1u) ||
+        !range(extension_offset, extension_size, image->rodata_size)) {
         return PM_EPROTO;
     }
     memset(result, 0, sizeof(*result));
@@ -89,6 +96,8 @@ int pm_wire_descriptor_decode(const struct pm_elf_image *image,
     result->version_size = version_size - 1u;
     result->create_address = read_u32(buffer, 72u);
     result->destroy_address = read_u32(buffer, 76u);
+    result->extension = image->rodata + extension_offset;
+    result->extension_size = extension_size;
     if (result->create_address == 0u || result->destroy_address == 0u) {
         return PM_EPROTO;
     }

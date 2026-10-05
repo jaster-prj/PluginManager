@@ -63,6 +63,8 @@ struct pm_plugin_descriptor {
     const char *version;
     pm_plugin_create_fn create;
     pm_plugin_destroy_fn destroy;
+    const uint8_t *extension;
+    size_t extension_size;
 };
 
 #define PM_PLUGIN_DESCRIPTOR_MIN_SIZE \

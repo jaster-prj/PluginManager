@@ -13,8 +13,8 @@ extern "C" {
 #endif
 
 #define PM_WIRE_DESCRIPTOR_MAGIC 0x53444D50u /* "PMDS" */
-#define PM_WIRE_DESCRIPTOR_VERSION 1u
-#define PM_WIRE_DESCRIPTOR_HEADER_SIZE 80u
+#define PM_WIRE_DESCRIPTOR_VERSION 2u
+#define PM_WIRE_DESCRIPTOR_HEADER_SIZE 88u
 #define PM_WIRE_DESCRIPTOR_MAX_REQUIRED_SERVICES 64u
 
 struct pm_wire_plugin_descriptor {
@@ -30,6 +30,8 @@ struct pm_wire_plugin_descriptor {
     size_t version_size;
     uint32_t create_address;
     uint32_t destroy_address;
+    const uint8_t *extension;
+    size_t extension_size;
 };
 
 #define PM_DESCRIPTOR_CREATE PM_ELF_ENTRY_CREATE

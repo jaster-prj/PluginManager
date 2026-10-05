@@ -826,6 +826,22 @@ int pm_manager_get_instance(struct pm_manager *manager, uint32_t plugin_id,
     return PM_OK;
 }
 
+int pm_manager_get_descriptor(struct pm_manager *manager, uint32_t plugin_id,
+                             const struct pm_plugin_descriptor **descriptor)
+{
+    struct pm_plugin_record *record;
+
+    if (manager == NULL || descriptor == NULL) {
+        return PM_EINVAL;
+    }
+    record = find_plugin(manager, plugin_id);
+    if (record == NULL || !record->loaded) {
+        return PM_ENOENT;
+    }
+    *descriptor = record->descriptor;
+    return PM_OK;
+}
+
 int pm_manager_filesystem_attach(struct pm_manager *manager,
                                  const void *identity)
 {
