@@ -10,6 +10,7 @@ zephyr_library_sources_ifdef(CONFIG_PLUGIN_MANAGER
     ${CMAKE_CURRENT_LIST_DIR}/../src/plugin_descriptor.c
     ${CMAKE_CURRENT_LIST_DIR}/../src/plugin_descriptor_bind.c
     ${CMAKE_CURRENT_LIST_DIR}/../src/plugin_target_arm.c
+    ${CMAKE_CURRENT_LIST_DIR}/../src/plugin_target_native.c
 )
 
 zephyr_library_sources_ifdef(CONFIG_PLUGIN_MANAGER_ZEPHYR_FS
