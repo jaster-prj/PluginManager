@@ -56,6 +56,7 @@ typedef void (*pm_manager_image_free_fn)(void *context, uint8_t *text,
 
 struct pm_manager_package_config {
     const struct pm_elf_profile *elf_profile;
+    uint16_t target_architecture;
     uint8_t *text_storage;
     size_t text_capacity;
     uint8_t *rodata_storage;

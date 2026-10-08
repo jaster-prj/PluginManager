@@ -12,6 +12,7 @@ add_library(plugin_manager
     src/plugin_descriptor.c
     src/plugin_descriptor_bind.c
     src/plugin_target_arm.c
+    src/plugin_target_native.c
 )
 
 

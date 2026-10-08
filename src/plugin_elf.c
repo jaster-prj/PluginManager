@@ -107,7 +107,8 @@ static int elf_header_valid(const uint8_t *buffer, size_t size,
         buffer[3] != 'F' || buffer[4] != PM_ELF_CLASS_32 ||
         buffer[5] != PM_ELF_DATA_LSB || buffer[6] != 1u ||
         u16(buffer, 16u) != PM_ELF_TYPE_REL ||
-        u16(buffer, 18u) != PM_ELF_MACHINE_ARM || u32(buffer, 20u) != 1u ||
+         u16(buffer, 18u) != (profile->machine == 0u ? PM_ELF_MACHINE_ARM :
+                              profile->machine) || u32(buffer, 20u) != 1u ||
         u16(buffer, 40u) != ELF32_HDR_SIZE || u16(buffer, 46u) != ELF32_SHDR_SIZE) {
         return PM_EPROTO;
     }
@@ -280,7 +281,8 @@ static int apply_relocations(const uint8_t *buffer, size_t size,
             const char *symbol_name;
             uint8_t *target;
             size_t target_size;
-            if (relocation_type != PM_ELF_R_ARM_ABS32 ||
+            if (relocation_type != (profile->relocation_type == 0u ?
+                                    PM_ELF_R_ARM_ABS32 : profile->relocation_type) ||
                 (size_t)symbol_index * ELF32_SYM_SIZE >= symlen) {
                 return PM_ENOTSUP;
             }

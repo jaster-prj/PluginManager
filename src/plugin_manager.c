@@ -548,6 +548,11 @@ int pm_manager_load_package(struct pm_manager *manager, const uint8_t *package,
         manager_leave(manager);
         return status;
     }
+    if (config->target_architecture != 0u &&
+        manifest.target_architecture != config->target_architecture) {
+        manager_leave(manager);
+        return PM_EPROTO;
+    }
     if (manifest.image_size > config->elf_profile->max_image_size ||
         manifest.ram_size > config->elf_profile->max_ram_size) {
         manager_leave(manager);

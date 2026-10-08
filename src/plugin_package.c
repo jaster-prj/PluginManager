@@ -205,7 +205,8 @@ int pm_package_parse(const uint8_t *buffer, size_t buffer_size,
     signature_offset = read_u32(buffer, FIELD_SIGNATURE_OFFSET);
     signature_size = read_u32(buffer, FIELD_SIGNATURE_SIZE);
 
-    if (read_u16(buffer, FIELD_TARGET_ARCHITECTURE) != PM_PACKAGE_TARGET_ARM_CORTEX_M ||
+    if ((read_u16(buffer, FIELD_TARGET_ARCHITECTURE) != PM_PACKAGE_TARGET_ARM_CORTEX_M &&
+         read_u16(buffer, FIELD_TARGET_ARCHITECTURE) != PM_PACKAGE_TARGET_NATIVE_SIM) ||
         !range_valid(image_offset, image_size, total_size) ||
         !string_valid(buffer, name_offset, name_size, total_size,
                       PM_PACKAGE_MAX_NAME_LENGTH) ||

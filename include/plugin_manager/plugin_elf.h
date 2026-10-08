@@ -13,10 +13,12 @@ extern "C" {
 #define PM_ELF_CLASS_32 1u
 #define PM_ELF_DATA_LSB 1u
 #define PM_ELF_MACHINE_ARM 40u
+#define PM_ELF_MACHINE_I386 3u
 #define PM_ELF_TYPE_REL 1u
 #define PM_ELF_MAX_SECTIONS 64u
 #define PM_ELF_DESCRIPTOR_SYMBOL "pm_plugin_get_descriptor"
 #define PM_ELF_R_ARM_ABS32 2u
+#define PM_ELF_R_I386_32 1u
 
 typedef int (*pm_elf_resolve_fn)(void *context, const char *name,
                                  uint32_t *address);
@@ -37,6 +39,8 @@ struct pm_elf_profile {
     uint32_t text_address;
     uint32_t rodata_address;
     uint32_t data_address;
+    uint16_t machine;
+    uint8_t relocation_type;
 };
 
 struct pm_elf_image {
