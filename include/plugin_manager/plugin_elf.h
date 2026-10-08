@@ -19,6 +19,7 @@ extern "C" {
 #define PM_ELF_DESCRIPTOR_SYMBOL "pm_plugin_get_descriptor"
 #define PM_ELF_R_ARM_ABS32 2u
 #define PM_ELF_R_I386_32 1u
+#define PM_ELF_R_I386_PC32 2u
 
 typedef int (*pm_elf_resolve_fn)(void *context, const char *name,
                                  uint32_t *address);

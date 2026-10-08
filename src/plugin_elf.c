@@ -281,8 +281,11 @@ static int apply_relocations(const uint8_t *buffer, size_t size,
             const char *symbol_name;
             uint8_t *target;
             size_t target_size;
-            if (relocation_type != (profile->relocation_type == 0u ?
-                                    PM_ELF_R_ARM_ABS32 : profile->relocation_type) ||
+            if (!((profile->machine == PM_ELF_MACHINE_I386 &&
+                   (relocation_type == PM_ELF_R_I386_32 ||
+                    relocation_type == PM_ELF_R_I386_PC32)) ||
+                  relocation_type == (profile->relocation_type == 0u ?
+                                      PM_ELF_R_ARM_ABS32 : profile->relocation_type)) ||
                 (size_t)symbol_index * ELF32_SYM_SIZE >= symlen) {
                 return PM_ENOTSUP;
             }
@@ -349,7 +352,8 @@ static int apply_relocations(const uint8_t *buffer, size_t size,
                     }
                 }
             }
-            if (symbol_section == text && symbol_type == 2u) {
+            if (profile->machine != PM_ELF_MACHINE_I386 &&
+                symbol_section == text && symbol_type == 2u) {
                 resolved |= 1u;
             }
             if (info == text) {
@@ -364,8 +368,13 @@ static int apply_relocations(const uint8_t *buffer, size_t size,
             if (!range(rel_address, 4u, target_size)) {
                 return PM_EOVERFLOW;
             }
-            /* R_ARM_ABS32 always applies the existing word as addend. */
-            put32(target + rel_address, resolved + u32(target, rel_address));
+            if (relocation_type == PM_ELF_R_I386_PC32) {
+                uint32_t place = (uint32_t)(uintptr_t)(target + rel_address);
+                put32(target + rel_address,
+                      resolved + u32(target, rel_address) - place);
+            } else {
+                put32(target + rel_address, resolved + u32(target, rel_address));
+            }
         }
     }
     return PM_OK;
