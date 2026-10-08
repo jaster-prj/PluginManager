@@ -163,10 +163,12 @@ static int storage_read(void *context, const char *name, uint32_t offset,
     if (status != 0) {
         return pm_status(status);
     }
-    status = fs_seek(&file, (off_t)offset, FS_SEEK_SET);
+	/* Some Zephyr filesystem backends reject a no-op seek on a freshly
+	 * opened file.  Reads from offset zero are already positioned correctly. */
+	status = offset == 0u ? 0 : fs_seek(&file, (off_t)offset, FS_SEEK_SET);
     if (status == 0 && size > 0u) {
-        count = fs_read(&file, destination, size);
-        status = count == (ssize_t)size ? 0 :
+		count = fs_read(&file, destination, size);
+		status = count == (ssize_t)size ? 0 :
             (count < 0 ? (int)count : -EIO);
     }
     (void)fs_close(&file);

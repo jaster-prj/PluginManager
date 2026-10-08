@@ -57,7 +57,7 @@ int pm_elf_resolve_entry(const struct pm_elf_image *image, uint32_t address,
         return PM_EINVAL;
     }
     aligned = address & ~1u;
-    if ((address & 1u) == 0u || aligned < image->text_address ||
+    if (aligned < image->text_address ||
         (uint64_t)(aligned - image->text_address) >= image->text_size) {
         return PM_EPROTO;
     }
@@ -281,6 +281,7 @@ static int apply_relocations(const uint8_t *buffer, size_t size,
             const char *symbol_name;
             uint8_t *target;
             size_t target_size;
+            int descriptor_entry = 0;
             if (!((profile->machine == PM_ELF_MACHINE_I386 &&
                    (relocation_type == PM_ELF_R_I386_32 ||
                     relocation_type == PM_ELF_R_I386_PC32)) ||
@@ -322,6 +323,7 @@ static int apply_relocations(const uint8_t *buffer, size_t size,
                             (rel_address == descriptor_value + 72u ||
                              rel_address == descriptor_value + 76u)) {
                             resolved = symbol_value;
+                            descriptor_entry = 1;
                         } else {
                             resolved = (uint32_t)(uintptr_t)text_storage +
                                        (symbol_value < profile->text_address ?
@@ -373,7 +375,8 @@ static int apply_relocations(const uint8_t *buffer, size_t size,
                 put32(target + rel_address,
                       resolved + u32(target, rel_address) - place);
             } else {
-                put32(target + rel_address, resolved + u32(target, rel_address));
+                put32(target + rel_address, resolved +
+                      (descriptor_entry ? 0u : u32(target, rel_address)));
             }
         }
     }
