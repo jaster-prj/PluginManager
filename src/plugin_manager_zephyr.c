@@ -144,11 +144,13 @@ static int storage_size(void *context, const char *name, uint32_t *size)
 static int storage_read(void *context, const char *name, uint32_t offset,
                         void *destination, size_t size)
 {
+#define PM_ZEPHYR_READ_CHUNK 256u
     const struct pm_zephyr_filesystem *filesystem =
         context;
     struct fs_file_t file;
     char path[256];
     ssize_t count;
+    size_t completed = 0u;
     int status;
 
     if (destination == NULL && size != 0u) {
@@ -166,12 +168,32 @@ static int storage_read(void *context, const char *name, uint32_t offset,
 	/* Some Zephyr filesystem backends reject a no-op seek on a freshly
 	 * opened file.  Reads from offset zero are already positioned correctly. */
 	status = offset == 0u ? 0 : fs_seek(&file, (off_t)offset, FS_SEEK_SET);
-    if (status == 0 && size > 0u) {
-		count = fs_read(&file, destination, size);
-		status = count == (ssize_t)size ? 0 :
-            (count < 0 ? (int)count : -EIO);
+    if (status == 0) {
+        while (completed < size) {
+            size_t requested = size - completed;
+
+            if (requested > PM_ZEPHYR_READ_CHUNK) {
+                requested = PM_ZEPHYR_READ_CHUNK;
+            }
+            count = fs_read(&file, (uint8_t *)destination + completed,
+                            requested);
+            if (count < 0) {
+                status = (int)count;
+                break;
+            }
+            if (count == 0) {
+                status = -EIO;
+                break;
+            }
+            if ((size_t)count > requested) {
+                status = -EIO;
+                break;
+            }
+            completed += (size_t)count;
+        }
     }
     (void)fs_close(&file);
+#undef PM_ZEPHYR_READ_CHUNK
     return status == 0 ? PM_OK : pm_status(status);
 }
 
